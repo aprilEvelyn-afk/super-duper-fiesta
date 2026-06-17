@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  email      String    @unique
+  hashedPass String
+  createdAt  DateTime  @default(now())
+  profile    Profile?
+  accounts   Account[]
+  transactions Transaction[]
+  auditLogs  AuditLog[]
+}
+
+model Profile {
+  id       Int     @id @default(autoincrement())
+  user     User    @relation(fields: [userId], references: [id])
+  userId   Int     @unique
+  legalName String?
+  dob      DateTime?
+  kycStatus String  @default("pending")
+}
+
+model Account {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  type     String
+  currency String   @default("USD")
+  balance  Decimal  @default("0")
+  status   String   @default("active")
+  createdAt DateTime @default(now())
+  ledgerEntries LedgerEntry[] @relation("account_entries")
+}
+
+model Transaction {
+  id              Int        @id @default(autoincrement())
+  user            User       @relation(fields: [userId], references: [id])
+  userId          Int
+  fromAccountId   Int
+  toAccountId     Int
+  amount          Decimal
+  currency        String     @default("USD")
+  status          String     @default("initiated")
+  idempotencyKey  String?    @unique
+  createdAt       DateTime   @default(now())
+  settledAt       DateTime?
+  ledgerEntries   LedgerEntry[]
+}
+
+model LedgerEntry {
+  id             Int       @id @default(autoincrement())
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
+  transactionId  Int
+  account        Account   @relation("account_entries", fields: [accountId], references: [id])
+  accountId      Int
+  entryType      String    // "debit" or "credit"
+  contraAccountId Int
+  amount         Decimal
+  currency       String
+  createdAt      DateTime  @default(now())
+  metadata       Json?
+}
+
+model IdempotencyKey {
+  key       String   @id
+  createdAt DateTime @default(now())
+  result    Json?
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int?
+  action    String
+  resource  String
+  diff      Json?
+  createdAt DateTime @default(now())
+}

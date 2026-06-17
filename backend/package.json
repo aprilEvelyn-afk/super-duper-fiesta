@@ -14,7 +14,9 @@
     "@prisma/client": "^5.0.0",
     "decimal.js": "^10.0.0",
     "helmet": "^7.0.0",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0"
   },
   "devDependencies": {
     "prisma": "^5.0.0",
